@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1015" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="__SERVER_NAME__">
+<link rel="manifest" href="/hapanel/manifest.webmanifest?v=__APP_ID__">
+<link rel="icon" href="/hapanel/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/hapanel/apple-touch-icon.png">
+<title>Sign in · __SERVER_NAME__</title>
+<script>
+  try { const t = localStorage.getItem("hapanel-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  :root {
+    --accent: #16a34a; --bad: #dc2626; --bad-soft: #fdecec; --ok-soft: #e7f7ed; --ok-text: #15803d;
+    --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f9fafb; --text: #0f172a; --text-2: #475569;
+    --muted: #94a3b8; --line: #e8ebef; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #22c55e; --bad: #f87171; --bad-soft: rgba(248,113,113,.12); --ok-soft: rgba(34,197,94,.12); --ok-text: #4ade80;
+      --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
+      --muted: #687384; --line: #232933; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --accent: #22c55e; --bad: #f87171; --bad-soft: rgba(248,113,113,.12); --ok-soft: rgba(34,197,94,.12); --ok-text: #4ade80;
+    --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
+    --muted: #687384; --line: #232933; color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); display: grid; place-items: center;
+         padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+         font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         -webkit-font-smoothing: antialiased; }
+  main { width: 100%; max-width: 360px; }
+  .head { text-align: center; margin-bottom: 22px; }
+  .head img { width: 56px; height: 56px; border-radius: 14px; }
+  .head h1 { margin: 14px 0 2px; font-size: 22px; font-weight: 650; letter-spacing: -.02em; }
+  .head p { margin: 0; color: var(--muted); font-size: 13px; }
+  form { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+  .field + .field { margin-top: 14px; }
+  input { width: 100%; height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line);
+          background: var(--surface-2); color: var(--text); font: inherit; font-size: 16px; outline: none; }
+  input:focus { border-color: var(--accent); }
+  .pw { position: relative; }
+  .pw input { padding-right: 64px; }
+  .pw button { position: absolute; right: 6px; top: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 8px;
+               background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+  .submit { width: 100%; height: 44px; margin-top: 20px; border: 0; border-radius: 10px; background: var(--accent);
+            color: #fff; font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
+  .submit:disabled { opacity: .6; cursor: default; }
+  .msg { display: none; margin-bottom: 16px; padding: 10px 12px; border-radius: 10px; font-size: 13px; }
+  .msg.show { display: block; }
+  .msg.bad { background: var(--bad-soft); color: var(--bad); }
+  .msg.ok { background: var(--ok-soft); color: var(--ok-text); }
+  .foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <img src="/hapanel/icon-192.png" alt="">
+    <h1>__SERVER_NAME__</h1>
+    <p>Sign in to the server dashboard</p>
+  </div>
+  <form id="form" method="post" action="/hapanel/login" novalidate>
+    <div class="msg" id="msg" role="alert"></div>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" value="admin" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="pw">
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button type="button" id="toggle">Show</button>
+      </div>
+    </div>
+    <button class="submit" id="submit" type="submit">Sign in</button>
+  </form>
+  <div class="foot">Sessions last 14 days on this device.</div>
+</main>
+<script>
+  const $ = id => document.getElementById(id);
+  function show(text, kind) { const m = $("msg"); m.textContent = text; m.className = "msg show " + kind; }
+  if (new URLSearchParams(location.search).has("signed_out")) show("You've been signed out.", "ok");
+  if (new URLSearchParams(location.search).has("expired")) show("Your session ended. Please sign in again.", "ok");
+  $("toggle").onclick = () => {
+    const p = $("password"), hidden = p.type === "password";
+    p.type = hidden ? "text" : "password"; $("toggle").textContent = hidden ? "Hide" : "Show"; p.focus();
+  };
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!$("password").value) { show("Enter your password.", "bad"); return; }
+    $("submit").disabled = true; $("submit").textContent = "Signing in…";
+    try {
+      const res = await fetch("/hapanel/login", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-HAPanel": "1" },
+        body: new URLSearchParams({ username: $("username").value.trim(), password: $("password").value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Sign-in failed (HTTP " + res.status + ")");
+      location.replace("/hapanel/#home");   // always start on Overview after signing in
+    } catch (err) {
+      show(err.message, "bad");
+      $("password").select();
+      $("submit").disabled = false; $("submit").textContent = "Sign in";
+    }
+  });
+</script>
+</body>
+</html>

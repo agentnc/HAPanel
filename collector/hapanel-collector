@@ -1,0 +1,391 @@
+#!/usr/bin/python3 -I
+"""Collect system metrics for HAPanel.
+
+Writes JSON every second into HAProxy's chroot (/var/lib/haproxy/hapanel/sys.json), where
+/etc/haproxy/hapanel/hapanel.lua streams it to the panel together with HAProxy's own counters.
+Runs as root (reads /proc, crontabs and certificates); writes only that one file.
+"""
+import json
+import os
+import pwd
+import socket
+import subprocess
+import time
+from datetime import datetime, timedelta, timezone
+
+OUT = "/var/lib/haproxy/hapanel/sys.json"
+HOSTS_MAP = "/etc/haproxy/hosts.map"
+CERT_DIR = "/etc/haproxy/certs"
+INTERVAL = 1
+CERT_EVERY = 300
+CRON_EVERY = 30
+MAX_PROCS = 150
+CLK_TCK = os.sysconf("SC_CLK_TCK")
+PAGE = os.sysconf("SC_PAGE_SIZE")
+
+
+def read(path):
+    with open(path) as f:
+        return f.read()
+
+
+def cpu_stat():
+    """{'cpu': [fields...], 'cpu0': [...], ...} from /proc/stat"""
+    out = {}
+    for line in read("/proc/stat").splitlines():
+        if line.startswith("cpu"):
+            name, *vals = line.split()
+            out[name] = [int(v) for v in vals]
+    return out
+
+
+def cpu_usage(prev, cur):
+    """Busy % per CPU, plus a user/system/iowait/steal breakdown for the total."""
+    def pct(a, b):
+        d = [y - x for x, y in zip(a, b)]
+        total = max(1, sum(d))
+        user, nice, system, idle, iowait, irq, softirq, steal = (d + [0] * 8)[:8]
+        return {"busy": 100 * (total - idle - iowait) / total, "user": 100 * (user + nice) / total,
+                "system": 100 * (system + irq + softirq) / total, "iowait": 100 * iowait / total,
+                "steal": 100 * steal / total}
+    total = pct(prev["cpu"], cur["cpu"])
+    cores = [round(pct(prev[k], cur[k])["busy"], 1)
+             for k in sorted((k for k in cur if k != "cpu"), key=lambda k: int(k[3:])) if k in prev]
+    return {k: round(v, 1) for k, v in total.items()}, cores
+
+
+def meminfo():
+    m = {}
+    for line in read("/proc/meminfo").splitlines():
+        k, v = line.split(":", 1)
+        m[k] = int(v.split()[0]) * 1024
+    return m
+
+
+def net_bytes():
+    rx = tx = 0
+    for line in read("/proc/net/dev").splitlines()[2:]:
+        name, data = line.split(":", 1)
+        if name.strip() == "lo":
+            continue
+        cols = data.split()
+        rx += int(cols[0])
+        tx += int(cols[8])
+    return rx, tx
+
+
+_users = {}
+
+
+def user_name(uid):
+    if uid not in _users:
+        try:
+            _users[uid] = pwd.getpwuid(uid).pw_name
+        except KeyError:
+            _users[uid] = str(uid)
+    return _users[uid]
+
+
+def processes():
+    """{pid: info} for every process, with cumulative CPU ticks for delta calculation."""
+    procs = {}
+    for pid in filter(str.isdigit, os.listdir("/proc")):
+        try:
+            stat = read(f"/proc/{pid}/stat")
+            comm = stat[stat.index("(") + 1:stat.rindex(")")]
+            f = stat[stat.rindex(")") + 2:].split()
+            ppid = int(f[1])
+            kernel = ppid == 2 or pid == "2"
+            cmd = ""
+            if not kernel:
+                with open(f"/proc/{pid}/cmdline", "rb") as fh:
+                    cmd = fh.read(400).replace(b"\0", b" ").decode(errors="replace").strip()
+            procs[int(pid)] = {
+                "pid": int(pid), "user": user_name(os.stat(f"/proc/{pid}").st_uid), "state": f[0],
+                "ticks": int(f[11]) + int(f[12]), "nice": int(f[16]), "threads": int(f[17]),
+                "rss": int(f[21]) * PAGE, "cmd": cmd or f"[{comm}]", "name": comm, "kernel": kernel,
+            }
+        except (OSError, ValueError, IndexError):
+            continue
+    return procs
+
+
+def sites():
+    out = []
+    try:
+        for line in read(HOSTS_MAP).splitlines():
+            line = line.split("#", 1)[0].split()
+            if len(line) >= 2:
+                out.append({"host": line[0], "backend": line[1]})
+    except OSError:
+        pass
+    return out
+
+
+def certs():
+    out = []
+    for name in sorted(os.listdir(CERT_DIR)):
+        if not name.endswith(".pem"):
+            continue
+        try:
+            text = subprocess.run(
+                ["openssl", "x509", "-noout", "-enddate", "-issuer", "-ext", "subjectAltName",
+                 "-in", os.path.join(CERT_DIR, name)],
+                capture_output=True, text=True, timeout=5).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        end = issuer = ""
+        names = []
+        for line in text.splitlines():
+            line = line.strip()
+            if line.startswith("notAfter="):
+                end = datetime.strptime(line[9:], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+            elif line.startswith("issuer="):
+                issuer = line.split("O=", 1)[-1].split(",")[0].strip()
+            elif "DNS:" in line:
+                names = [n.strip()[4:] for n in line.split(",") if n.strip().startswith("DNS:")]
+        if end:
+            out.append({"file": name, "names": names, "issuer": issuer,
+                        "expires": end.isoformat(), "days_left": (end - datetime.now(timezone.utc)).days})
+    return out
+
+
+CRON_MACROS = {"@yearly": "0 0 1 1 *", "@annually": "0 0 1 1 *", "@monthly": "0 0 1 * *", "@weekly": "0 0 * * 0",
+               "@daily": "0 0 * * *", "@midnight": "0 0 * * *", "@hourly": "0 * * * *"}
+CRON_NAMES = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "oct": 10,
+              "nov": 11, "dec": 12, "sun": 0, "mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6}
+DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
+
+def cron_field(text, lo, hi):
+    values = set()
+    for part in text.lower().split(","):
+        part, _, step = part.partition("/")
+        if part == "*":
+            a, b = lo, hi
+        else:
+            a, _, b = part.partition("-")
+            a = CRON_NAMES.get(a, None) if not a.isdigit() else int(a)
+            b = (CRON_NAMES.get(b) if not b.isdigit() else int(b)) if b else (hi if step else a)
+            if a is None or b is None:
+                raise ValueError(text)
+        values.update(range(a, b + 1, int(step) if step else 1))
+    return values
+
+
+def cron_next(expr, after):
+    """Next run time (naive local datetime) of a 5-field cron expression, or None."""
+    minute, hour, dom, month, dow = expr.split()
+    mins, hours = cron_field(minute, 0, 59), cron_field(hour, 0, 23)
+    doms, months = cron_field(dom, 1, 31), cron_field(month, 1, 12)
+    dows = {d % 7 for d in cron_field(dow, 0, 7)}
+    t = after.replace(second=0, microsecond=0) + timedelta(minutes=1)
+    limit = after + timedelta(days=366 * 4)
+    while t < limit:
+        if t.month not in months:
+            t = (t.replace(day=1) + timedelta(days=32)).replace(day=1, hour=0, minute=0)
+            continue
+        dom_ok, dow_ok = t.day in doms, (t.weekday() + 1) % 7 in dows
+        day_ok = (dom_ok or dow_ok) if dom != "*" and dow != "*" else (dom_ok and dow_ok)
+        if not day_ok:
+            t = (t + timedelta(days=1)).replace(hour=0, minute=0)
+        elif t.hour not in hours:
+            t = (t + timedelta(hours=1)).replace(minute=0)
+        elif t.minute not in mins:
+            t += timedelta(minutes=1)
+        else:
+            return t
+    return None
+
+
+def cron_describe(expr):
+    """Plain-English schedule for the common shapes; the raw expression otherwise."""
+    if expr == "@reboot":
+        return "At boot"
+    m, h, dom, mon, dow = expr.split()
+    if m.startswith("*/") and h == dom == mon == dow == "*":
+        return f"Every {m[2:]} minutes"
+    if m == h == dom == mon == dow == "*":
+        return "Every minute"
+    if m.isdigit() and h == dom == mon == dow == "*":
+        return f"Hourly at :{int(m):02d}"
+    if m.isdigit() and h.startswith("*/") and dom == mon == dow == "*":
+        return f"Every {h[2:]} hours at :{int(m):02d}"
+    if m.isdigit() and h.replace(",", "").isdigit() and "," in h and dom == mon == dow == "*":
+        return "Daily at " + ", ".join(f"{int(x):02d}:{int(m):02d}" for x in h.split(","))
+    if m.isdigit() and h.isdigit():
+        at = f"{int(h):02d}:{int(m):02d}"
+        if dom == mon == dow == "*":
+            return f"Daily at {at}"
+        if dom == mon == "*" and dow.isdigit():
+            return f"{DAYS[int(dow) % 7]}s at {at}"
+        if dom.isdigit() and mon == dow == "*":
+            return f"Monthly on day {dom} at {at}"
+    return expr
+
+
+def cron_last_runs():
+    """{command: last ISO time} from cron's journal entries (last 7 days)."""
+    last = {}
+    try:
+        out = subprocess.run(["journalctl", "-t", "CRON", "--since", "-7d", "--no-pager", "-o", "short-iso"],
+                             capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return last
+    for line in out.splitlines():
+        if " CMD (" in line:
+            last[line.split(" CMD (", 1)[1].rstrip(")")] = line.split(" ", 1)[0]
+    return last
+
+
+def cron_jobs():
+    now = datetime.now().astimezone()
+    naive = now.replace(tzinfo=None)
+    last = cron_last_runs()
+    sources = [(f"/var/spool/cron/crontabs/{u}", u) for u in sorted(os.listdir("/var/spool/cron/crontabs"))] \
+        if os.path.isdir("/var/spool/cron/crontabs") else []
+    sources.append(("/etc/crontab", None))
+    if os.path.isdir("/etc/cron.d"):
+        sources += [(f"/etc/cron.d/{f}", None) for f in sorted(os.listdir("/etc/cron.d")) if not f.startswith(".")]
+    jobs = []
+    for path, user in sources:
+        try:
+            lines = read(path).splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("#") or ("=" in line.split()[0] and not line.startswith("@")):
+                continue
+            parts = line.split()
+            if parts[0].startswith("@"):
+                expr, rest = CRON_MACROS.get(parts[0], parts[0]), parts[1:]
+            else:
+                expr, rest = " ".join(parts[:5]), parts[5:]
+            job_user = user or (rest[0] if rest else "")
+            cmd = " ".join(rest if user else rest[1:])
+            if not cmd:
+                continue
+            try:
+                nxt = None if expr == "@reboot" else cron_next(expr, naive)
+                human = cron_describe(expr)
+            except (ValueError, IndexError):
+                nxt, human = None, expr
+            jobs.append({"source": path.replace("/var/spool/cron/crontabs/", "crontab:"), "user": job_user,
+                         "schedule": parts[0] if parts[0].startswith("@") else expr, "human": human, "command": cmd,
+                         "next": nxt.replace(tzinfo=now.tzinfo).isoformat() if nxt else None,
+                         "last": last.get(cmd)})
+    jobs.sort(key=lambda j: j["next"] or "9999")
+    periodic = {}
+    for kind in ("hourly", "daily", "weekly", "monthly"):
+        d = f"/etc/cron.{kind}"
+        if os.path.isdir(d):
+            periodic[kind] = sorted(f for f in os.listdir(d) if not f.startswith(".") and f != "placeholder")
+    return jobs, periodic
+
+
+def systemd_timers():
+    try:
+        out = subprocess.run(["systemctl", "list-timers", "--all", "--output=json"],
+                             capture_output=True, text=True, timeout=10).stdout
+        timers = json.loads(out or "[]")
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return []
+    iso = lambda us: datetime.fromtimestamp(us / 1e6, timezone.utc).isoformat() if us else None
+    return sorted(({"unit": t.get("unit"), "activates": t.get("activates"), "next": iso(t.get("next")),
+                    "last": iso(t.get("last"))} for t in timers), key=lambda t: t["next"] or "9999")
+
+
+def ip_addresses():
+    """Global (non-loopback, non-link-local) addresses, IPv4 first."""
+    try:
+        out = subprocess.run(["ip", "-j", "addr", "show", "scope", "global"],
+                             capture_output=True, text=True, timeout=5).stdout
+        ifaces = json.loads(out or "[]")
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return []
+    ips = [{"iface": i.get("ifname"), "family": "IPv6" if a.get("family") == "inet6" else "IPv4", "addr": a.get("local")}
+           for i in ifaces for a in i.get("addr_info", []) if a.get("local")]
+    return sorted(ips, key=lambda x: x["family"])
+
+
+def os_name():
+    for line in read("/etc/os-release").splitlines():
+        if line.startswith("PRETTY_NAME="):
+            return line.split("=", 1)[1].strip('"')
+    return "Linux"
+
+
+def main():
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    static = {"hostname": socket.gethostname(), "os": os_name(), "kernel": os.uname().release,
+              "cores": os.cpu_count()}
+    prev_cpu, prev_net, prev_procs, prev_t = cpu_stat(), net_bytes(), processes(), time.monotonic()
+    cert_list, cert_at, cert_mtime = [], 0, None
+    cron, cron_at = {"jobs": [], "periodic": {}, "timers": []}, 0
+    ips, ips_at = [], 0
+    while True:
+        time.sleep(INTERVAL)
+        now = time.monotonic()
+        cpu, net, procs, dt = cpu_stat(), net_bytes(), processes(), now - prev_t
+        cpu_total, cpu_cores = cpu_usage(prev_cpu, cpu)
+        m = meminfo()
+        disk = os.statvfs("/")
+        # Rescan certificates when one is added/removed/renewed, and periodically for days_left
+        mtime = os.stat(CERT_DIR).st_mtime
+        if now - cert_at > CERT_EVERY or mtime != cert_mtime:
+            cert_list, cert_at, cert_mtime = certs(), now, mtime
+        if now - ips_at > CERT_EVERY:
+            ips, ips_at = ip_addresses(), now
+        if now - cron_at > CRON_EVERY:
+            jobs, periodic = cron_jobs()
+            cron, cron_at = {"jobs": jobs, "periodic": periodic, "timers": systemd_timers()}, now
+
+        # htop-style process table (user processes; kernel threads are only counted)
+        plist, running, threads, hap_rss = [], 0, 0, 0
+        for pid, p in procs.items():
+            threads += p["threads"]
+            if p["state"] == "R":
+                running += 1
+            if p["name"] == "haproxy":
+                hap_rss += p["rss"]
+            if p["kernel"]:
+                continue
+            old = prev_procs.get(pid)
+            cpu_pct = 100 * (p["ticks"] - old["ticks"]) / CLK_TCK / dt if old else 0.0
+            plist.append({"pid": pid, "user": p["user"], "state": p["state"], "nice": p["nice"],
+                          "threads": p["threads"], "cpu": round(max(0.0, cpu_pct), 1),
+                          "mem": round(100 * p["rss"] / m["MemTotal"], 1), "rss": p["rss"],
+                          "time": round(p["ticks"] / CLK_TCK, 1), "cmd": p["cmd"]})
+        plist.sort(key=lambda p: (p["cpu"], p["rss"]), reverse=True)
+
+        data = dict(static,
+                    time=datetime.now(timezone.utc).isoformat(),
+                    uptime=float(read("/proc/uptime").split()[0]),
+                    load=[float(x) for x in read("/proc/loadavg").split()[:3]],
+                    cpu=cpu_total["busy"], cpu_detail=cpu_total, cpu_cores=cpu_cores,
+                    mem={"total": m["MemTotal"], "used": m["MemTotal"] - m["MemAvailable"],
+                         "buffers": m.get("Buffers", 0), "cached": m.get("Cached", 0) + m.get("SReclaimable", 0),
+                         "swap_total": m.get("SwapTotal", 0), "swap_used": m.get("SwapTotal", 0) - m.get("SwapFree", 0)},
+                    disk={"total": disk.f_blocks * disk.f_frsize,
+                          "used": (disk.f_blocks - disk.f_bfree) * disk.f_frsize},
+                    net={"rx_rate": (net[0] - prev_net[0]) / dt, "tx_rate": (net[1] - prev_net[1]) / dt,
+                         "rx_total": net[0], "tx_total": net[1]},
+                    tasks={"total": len(procs), "user": len(plist), "kernel": len(procs) - len(plist),
+                           "threads": threads, "running": running},
+                    procs=plist[:MAX_PROCS],
+                    haproxy_rss=hap_rss,
+                    sites=sites(),
+                    certs=cert_list,
+                    cron=cron,
+                    ips=ips)
+        tmp = OUT + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(data, f, separators=(",", ":"))
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, OUT)
+        prev_cpu, prev_net, prev_procs, prev_t = cpu, net, procs, now
+
+
+if __name__ == "__main__":
+    main()

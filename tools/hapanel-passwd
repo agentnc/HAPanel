@@ -1,0 +1,62 @@
+#!/usr/bin/python3 -I
+"""Set or reset the HAPanel password from the shell (first install or forgotten password).
+
+Writes the same hash format the panel uses (/var/lib/haproxy/hapanel/state/auth),
+ends every session, and reloads HAProxy so the change takes effect everywhere.
+"""
+import getpass
+import hashlib
+import os
+import pwd
+import secrets
+import subprocess
+import sys
+
+STATE = "/var/lib/haproxy/hapanel/state"
+AUTH = f"{STATE}/auth"
+SESSIONS = f"{STATE}/sessions"
+ROUNDS, MIN_LEN = 5000, 10
+
+
+def hash_password(salt, pw):
+    h = hashlib.sha256((salt + pw).encode()).hexdigest().upper()
+    for _ in range(ROUNDS - 1):
+        h = hashlib.sha256((h + salt + pw).encode()).hexdigest().upper()
+    return h
+
+
+def main():
+    if os.geteuid() != 0:
+        sys.exit("Run as root.")
+    ha = pwd.getpwnam("haproxy")
+    os.makedirs(STATE, mode=0o700, exist_ok=True)
+    os.chown(STATE, ha.pw_uid, ha.pw_gid)
+
+    user = "admin"
+    try:
+        user = open(AUTH).read().split()[0]
+    except (OSError, IndexError):
+        pass
+    pw = getpass.getpass(f"New HAPanel password for '{user}': ")
+    if len(pw) < MIN_LEN:
+        sys.exit(f"Password must be at least {MIN_LEN} characters.")
+    if getpass.getpass("Repeat it: ") != pw:
+        sys.exit("Passwords don't match.")
+
+    salt = secrets.token_hex(16)
+    for path, data in ((AUTH, f"{user} v1 {ROUNDS} {salt} {hash_password(salt, pw)}\n"), (SESSIONS, "")):
+        tmp = path + ".tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        os.write(fd, data.encode())
+        os.close(fd)
+        os.chown(tmp, ha.pw_uid, ha.pw_gid)
+        os.replace(tmp, path)
+
+    # Reload drops sessions held in memory; harmless if HAProxy isn't running yet
+    if subprocess.run(["systemctl", "reload", "haproxy"]).returncode != 0:
+        print("Note: HAProxy was not reloaded (not running?). Start it to apply.")
+    print(f"Password for '{user}' set. All sessions were signed out.")
+
+
+if __name__ == "__main__":
+    main()

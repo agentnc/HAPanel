@@ -1,0 +1,10 @@
+# Never commit runtime state or secrets
+state/
+sessions
+auth
+*.pem
+*.key
+*.crt
+.env
+__pycache__/
+*.pyc

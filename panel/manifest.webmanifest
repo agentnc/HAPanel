@@ -1,0 +1,20 @@
+{
+  "name": "__SERVER_NAME__",
+  "short_name": "__SERVER_NAME__",
+  "description": "Live HAProxy and server dashboard",
+  "id": "/hapanel/?app=__APP_ID__",
+  "start_url": "/hapanel/",
+  "scope": "/hapanel/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1015",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "/hapanel/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/hapanel/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Processes", "url": "/hapanel/#procs", "icons": [{ "src": "/hapanel/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Sites", "url": "/hapanel/#sites", "icons": [{ "src": "/hapanel/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description=HAPanel metrics collector
+After=haproxy.service
+
+[Service]
+ExecStart=/usr/local/sbin/hapanel-collector
+Restart=always
+RestartSec=5
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

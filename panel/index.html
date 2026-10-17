@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1015" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="__SERVER_NAME__">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/hapanel/manifest.webmanifest?v=__APP_ID__">
+<link rel="icon" href="/hapanel/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/hapanel/apple-touch-icon.png">
+<title>__SERVER_NAME__</title>
+<script>
+  try { const t = localStorage.getItem("hapanel-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  :root {
+    --accent: #16a34a; --accent-soft: #e7f7ed; --accent-text: #15803d;
+    --warn: #d97706; --warn-soft: #fef5e4; --bad: #dc2626; --bad-soft: #fdecec;
+    --c1: #16a34a; --c2: #dc2626; --c3: #f59e0b; --c4: #3b82f6; --c5: #8b5cf6;
+    --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f9fafb; --text: #0f172a; --text-2: #475569;
+    --muted: #94a3b8; --line: #e8ebef; --track: #eef1f4; --grid: #f1f3f6;
+    --shadow: 0 1px 2px rgba(15,23,42,.04);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #22c55e; --accent-soft: rgba(34,197,94,.12); --accent-text: #4ade80;
+      --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --bad: #f87171; --bad-soft: rgba(248,113,113,.12);
+      --c1: #22c55e; --c2: #f87171; --c3: #fbbf24; --c4: #60a5fa; --c5: #a78bfa;
+      --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
+      --muted: #687384; --line: #232933; --track: #222832; --grid: #1c2129;
+      --shadow: none; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --accent: #22c55e; --accent-soft: rgba(34,197,94,.12); --accent-text: #4ade80;
+    --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --bad: #f87171; --bad-soft: rgba(248,113,113,.12);
+    --c1: #22c55e; --c2: #f87171; --c3: #fbbf24; --c4: #60a5fa; --c5: #a78bfa;
+    --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
+    --muted: #687384; --line: #232933; --track: #222832; --grid: #1c2129;
+    --shadow: none; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh;
+         font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select { font: inherit; color: inherit; }
+  .i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+       stroke-linecap: round; stroke-linejoin: round; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Shell ---------- */
+  .side { position: fixed; inset: 0 auto 0 0; width: 220px; padding: 22px 14px; display: flex; flex-direction: column;
+          border-right: 1px solid var(--line); background: var(--surface); z-index: 20; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 26px; }
+  .logo { width: 32px; height: 32px; border-radius: 9px; flex: none; }
+  .brand b { font-size: 15px; display: block; }
+  .brand small { color: var(--muted); font-size: 12px; display: block; }
+  .nav a { display: flex; align-items: center; gap: 12px; padding: 9px 12px; margin-bottom: 2px; border-radius: 9px;
+           color: var(--text-2); font-weight: 500; cursor: pointer; }
+  .nav a:hover { background: var(--surface-2); color: var(--text); }
+  .nav a.active { background: var(--surface-2); color: var(--text); }
+  .nav a.active .i { color: var(--accent); }
+  .side-foot { margin-top: auto; padding: 0 8px; color: var(--muted); font-size: 12px; }
+
+  .main { margin-left: 220px; }
+  .top { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+         padding: 18px 32px 14px; background: color-mix(in srgb, var(--bg) 82%, transparent);
+         backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px); }
+  .top h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.02em; }
+  .top-r { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; }
+  .live { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+                  animation: pulse 2s ease-in-out infinite; }
+  .live.stale::before { background: var(--bad); animation: none; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--accent-soft); } 50% { box-shadow: 0 0 0 5px var(--accent-soft); } }
+  .icon-btn { height: 34px; min-width: 34px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+              display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; color: var(--text-2);
+              padding: 0 9px; font-size: 12px; font-weight: 500; }
+  .icon-btn .i { width: 17px; height: 17px; }
+  #install-btn { display: none; color: var(--accent-text); }
+
+  .content { padding: 4px 32px 40px; max-width: 1240px; }
+  .page { display: none; }
+  .page.active { display: block; animation: fade .18s ease; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ---------- Building blocks ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); min-width: 0; }
+  .card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px 20px 0; }
+  .card-h h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .card-h small, .card-h a { color: var(--muted); font-size: 12px; }
+  .card-h a:hover { color: var(--text); }
+  .stack-y > * + * { margin-top: 16px; }
+  .cols { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+
+  /* Health banner */
+  .health { display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; }
+  .health .ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none;
+                background: var(--accent-soft); color: var(--accent); }
+  .health.warn .ic { background: var(--warn-soft); color: var(--warn); }
+  .health.bad .ic { background: var(--bad-soft); color: var(--bad); }
+  .health h3 { margin: 1px 0 2px; font-size: 16px; font-weight: 650; }
+  .health p { margin: 0; color: var(--text-2); font-size: 13px; }
+  .issues { list-style: none; margin: 10px 0 0; padding: 0; }
+  .issues li { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; font-size: 13px; border-top: 1px solid var(--line); }
+  .issues li:first-child { border-top: 0; }
+  .sev { flex: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; width: 62px; }
+  .sev.bad { color: var(--bad); } .sev.warn { color: var(--warn); } .sev.info { color: var(--muted); }
+
+  /* KPIs */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kpi { padding: 18px 20px; border-left: 1px solid var(--line); }
+  .kpi:first-child { border-left: 0; }
+  .kpi .t { color: var(--text-2); font-size: 12px; }
+  .kpi .v { font-size: 28px; font-weight: 650; letter-spacing: -.02em; line-height: 1.2; margin-top: 4px; }
+  .kpi .v small { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+  .kpi .s { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .kpi.warn .v { color: var(--warn); } .kpi.bad .v { color: var(--bad); }
+
+  /* Chart */
+  .seg { display: inline-flex; gap: 2px; }
+  .seg button { border: 0; background: none; padding: 4px 10px; border-radius: 7px; cursor: pointer; color: var(--muted);
+                font-size: 12px; font-weight: 500; }
+  .seg button.on { background: var(--surface-2); color: var(--text); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--text-2); padding: 10px 20px 0; }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .legend b { color: var(--text); font-weight: 600; }
+  canvas { width: 100%; height: 220px; display: block; padding: 6px 12px 12px; touch-action: pan-y; }
+
+  /* Lists */
+  .rows { list-style: none; margin: 0; padding: 8px 0; }
+  .rows li { display: flex; align-items: center; gap: 12px; padding: 11px 20px; border-top: 1px solid var(--line); }
+  .rows li:first-child { border-top: 0; }
+  .grow { flex: 1; min-width: 0; }
+  .ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rows .t { font-weight: 550; }
+  .rows .s { color: var(--muted); font-size: 12px; }
+  .rows .m { text-align: right; font-size: 13px; }
+  .rows .m span { display: block; color: var(--muted); font-size: 11px; }
+  .sdot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+  .sdot.warn { background: var(--warn); } .sdot.bad { background: var(--bad); }
+  .empty { color: var(--muted); padding: 22px 20px; text-align: center; font-size: 13px; }
+
+  /* Bars */
+  .res { padding: 10px 20px 18px; }
+  .bar-row + .bar-row { margin-top: 14px; }
+  .bar-h { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+  .bar-h span { color: var(--muted); font-size: 12px; }
+  .bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; display: flex; }
+  .bar > div { height: 100%; background: var(--accent); transition: width .5s ease; }
+  .bar > div:last-child { border-radius: 0 999px 999px 0; }
+  .bar.warn > div { background: var(--warn); } .bar.bad > div { background: var(--bad); }
+
+  /* Key/values */
+  .kv { list-style: none; margin: 0; padding: 6px 20px 10px; }
+  .kv li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .kv li:first-child { border-top: 0; }
+  .kv span { color: var(--text-2); }
+  .kv b { font-weight: 600; text-align: right; }
+
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+          background: var(--accent-soft); color: var(--accent-text); white-space: nowrap; }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); } .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .err { color: var(--bad); } .wrn { color: var(--warn); } .muted { color: var(--muted); }
+  .alert { display: none; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px; background: var(--bad-soft); color: var(--bad); }
+
+  /* ---------- Processes (htop-style) ---------- */
+  .meters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .meter-list { padding: 12px 20px 18px; }
+  .meter { display: grid; grid-template-columns: 54px minmax(0, 1fr) 112px; align-items: center; gap: 10px; font-size: 12px; }
+  .meter + .meter { margin-top: 10px; }
+  .meter .l { color: var(--text-2); font-weight: 600; font-family: var(--mono); }
+  .meter .v { text-align: right; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+  .meter .bar { height: 8px; }
+  .meter-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0 20px 16px; font-size: 11px; color: var(--muted); }
+  .meter-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fact { padding: 14px 20px; border-left: 1px solid var(--line); }
+  .fact:first-child { border-left: 0; }
+  .fact .t { color: var(--muted); font-size: 12px; }
+  .fact .v { font-size: 18px; font-weight: 650; margin-top: 2px; }
+  .fact .v small { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; padding: 14px 20px 6px; flex-wrap: wrap; }
+  .search { flex: 1; min-width: 160px; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line);
+            background: var(--surface-2); outline: none; }
+  .search:focus { border-color: var(--accent); }
+  .sort { height: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); }
+  .proc-wrap { overflow-x: auto; padding-bottom: 6px; }
+  table.procs { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .procs th { position: sticky; top: 0; text-align: right; font-weight: 500; font-size: 12px; color: var(--muted); padding: 8px 12px;
+              border-bottom: 1px solid var(--line); white-space: nowrap; cursor: pointer; user-select: none; background: var(--surface); }
+  .procs th.on { color: var(--text); }
+  .procs th.on::after { content: " ↓"; }
+  .procs td { text-align: right; padding: 7px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+  .procs th:first-child, .procs td:first-child { padding-left: 20px; }
+  .procs th.cmd, .procs td.cmd { text-align: left; width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; }
+  .procs td.cmd b { font-weight: 600; }
+  .procs td.cmd span { color: var(--muted); }
+  .procs tbody tr:hover td { background: var(--surface-2); }
+  .procs .hot { color: var(--bad); font-weight: 600; } .procs .warm { color: var(--warn); font-weight: 600; }
+  .procs .user-root { color: var(--c2); }
+  .st-R { color: var(--accent-text); font-weight: 700; } .st-D { color: var(--bad); font-weight: 700; }
+
+  /* ---------- Cron ---------- */
+  .code { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 1px 7px; border-radius: 6px;
+          background: var(--surface-2); border: 1px solid var(--line); color: var(--text-2); white-space: nowrap; }
+  .cmdline { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .rows .when { text-align: right; font-size: 13px; white-space: nowrap; min-width: 96px; }
+  .rows .when span { display: block; color: var(--muted); font-size: 11px; }
+  .soon { color: var(--accent-text); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* ---------- Header subtitle, IP copy, settings ---------- */
+  .top-sub { color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .ip-copy { cursor: pointer; font-variant-numeric: tabular-nums; }
+  .ip-copy:hover { color: var(--text); }
+  .ip-copy.copied { color: var(--accent-text); }
+  .m-only { display: none; }
+  .form { padding: 14px 20px 20px; }
+  .field label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .field .hint { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+  .field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .input { flex: 1; min-width: 180px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line);
+           background: var(--surface-2); outline: none; font-size: 15px; }
+  .input:focus { border-color: var(--accent); }
+  .btn { height: 40px; padding: 0 18px; border-radius: 10px; border: 0; background: var(--accent); color: #fff;
+         font-weight: 600; cursor: pointer; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .form-msg { font-size: 12px; margin-top: 8px; min-height: 18px; color: var(--muted); }
+  .form-msg.ok { color: var(--accent-text); } .form-msg.bad { color: var(--bad); }
+  .copy-btn { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 2px; display: inline-flex; vertical-align: -3px; }
+  .copy-btn .i { width: 15px; height: 15px; }
+
+  .btn-danger { background: var(--bad); }
+  .btn-ghost { background: none; border: 1px solid var(--line); color: var(--text-2); }
+  .pw-meter { height: 4px; border-radius: 999px; background: var(--track); margin-top: 8px; overflow: hidden; }
+  .pw-meter > div { height: 100%; width: 0; border-radius: 999px; background: var(--bad); transition: width .25s, background .25s; }
+  .signout { display: inline-block; margin-top: 8px; color: var(--muted); cursor: pointer; }
+  .signout:hover { color: var(--bad); }
+
+  .tabbar { display: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1100px) {
+    .cols, .meters { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 860px) {
+    .side { display: none; }
+    .main { margin-left: 0; padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+    .top { padding: calc(12px + env(safe-area-inset-top)) 16px 10px; }
+    .top h1 { font-size: 20px; }
+    .content { padding: 2px 12px 20px; }
+    .stack-y > * + * { margin-top: 12px; }
+    .cols, .meters { gap: 12px; }
+    .kpis, .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpi, .fact { padding: 14px 16px; }
+    .kpi:nth-child(3), .fact:nth-child(3) { border-left: 0; }
+    .kpi:nth-child(n+3), .fact:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .kpi .v { font-size: 24px; }
+    .health { padding: 16px; }
+    .card-h { padding: 16px 16px 0; }
+    .rows li { padding: 12px 16px; }
+    .legend { padding: 10px 16px 0; }
+    canvas { height: 180px; padding: 6px 6px 10px; }
+    .res, .kv, .meter-list { padding-left: 16px; padding-right: 16px; }
+    .meter-legend { padding: 0 16px 14px; }
+    .meter { grid-template-columns: 44px minmax(0, 1fr) 96px; }
+    .toolbar { padding: 12px 16px 4px; }
+    .top-r .live-time { display: none; }
+    .m-only { display: inline-flex; }
+    .form { padding: 12px 16px 16px; }
+
+    /* Process table -> compact cards */
+    .proc-wrap { overflow: visible; }
+    table.procs thead { display: none; }
+    table.procs, .procs tbody { display: block; }
+    .procs tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "cmd cpu mem" "meta cpu mem";
+                column-gap: 14px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+    .procs td { display: none; border: 0; padding: 0; }
+    .procs td.cmd { display: block; grid-area: cmd; max-width: none; padding: 0; font-size: 13px; }
+    .procs td.meta { display: block; grid-area: meta; text-align: left; color: var(--muted); font-size: 11px; font-family: inherit;
+                     min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rows .m.opt { display: none; }   /* phones: keep room for the site name */
+    .procs td.cpu, .procs td.mem { display: flex; flex-direction: column; justify-content: center; text-align: right; font-size: 13px; }
+    .procs td.cpu { grid-area: cpu; } .procs td.mem { grid-area: mem; }
+    .procs td.cpu::after { content: "CPU"; } .procs td.mem::after { content: "MEM"; }
+    .procs td.cpu::after, .procs td.mem::after { font-size: 10px; color: var(--muted); font-family: inherit; font-weight: 500; }
+
+    .tabbar { display: grid; grid-template-columns: repeat(6, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+              background: color-mix(in srgb, var(--surface) 88%, transparent); border-top: 1px solid var(--line);
+              backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px);
+              padding: 6px 2px calc(6px + env(safe-area-inset-bottom)); }
+    .tabbar a { display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 50px; justify-content: center;
+                color: var(--muted); font-size: 10.5px; font-weight: 500; cursor: pointer; }
+    .tabbar a.active { color: var(--text); }
+    .tabbar a.active .i { color: var(--accent); }
+  }
+  @media (min-width: 861px) { .procs td.meta { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .page.active, .live::before { animation: none; } .bar > div { transition: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 8v5M12 16.5v.01"/><path d="M10.3 3.9 2.5 17.5A2 2 0 0 0 4.2 20.5h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+</svg>
+
+<aside class="side">
+  <div class="brand"><img class="logo" src="/hapanel/icon-192.png" alt=""><div class="grow"><b class="ell" id="brand-name">__SERVER_NAME__</b><small class="ip-copy" id="side-ip" title="Copy IP">—</small></div></div>
+  <nav class="nav">
+    <a data-page="home" class="active"><svg class="i"><use href="#i-home"/></svg>Overview</a>
+    <a data-page="sites"><svg class="i"><use href="#i-globe"/></svg>Sites</a>
+    <a data-page="procs"><svg class="i"><use href="#i-list"/></svg>Processes</a>
+    <a data-page="cron"><svg class="i"><use href="#i-clock"/></svg>Cron jobs</a>
+    <a data-page="ssl"><svg class="i"><use href="#i-lock"/></svg>Certificates</a>
+    <a data-page="system"><svg class="i"><use href="#i-cpu"/></svg>System</a>
+    <a data-page="settings"><svg class="i"><use href="#i-gear"/></svg>Settings</a>
+  </nav>
+  <div class="side-foot"><div id="side-foot">—</div><a class="signout" data-logout>Sign out</a></div>
+</aside>
+
+<div class="main">
+  <header class="top">
+    <div class="grow"><h1 id="title">Overview</h1><div class="top-sub ell"><span id="top-name">__SERVER_NAME__</span> · <span class="ip-copy" id="top-ip" title="Copy IP">—</span></div></div>
+    <div class="top-r">
+      <span class="live stale" id="live"><span>Connecting</span></span>
+      <button class="icon-btn" id="install-btn" aria-label="Install app"><svg class="i"><use href="#i-down"/></svg>Install</button>
+      <button class="icon-btn" id="theme-btn" aria-label="Theme"><svg class="i"><use href="#i-auto"/></svg></button>
+      <button class="icon-btn m-only" data-page="settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="alert" id="error"></div>
+
+    <!-- OVERVIEW -->
+    <section class="page active stack-y" id="page-home">
+      <div class="card health" id="health">
+        <div class="ic"><svg class="i"><use href="#i-ok"/></svg></div>
+        <div class="grow"><h3 id="health-t">Connecting…</h3><p id="health-s">&nbsp;</p><ul class="issues" id="issues"></ul></div>
+      </div>
+
+      <div class="card kpis">
+        <div class="kpi" id="k-rps"><div class="t">Requests</div><div class="v num">–</div><div class="s">&nbsp;</div></div>
+        <div class="kpi" id="k-err"><div class="t">Error rate (5xx)</div><div class="v num">–</div><div class="s">&nbsp;</div></div>
+        <div class="kpi" id="k-lat"><div class="t">Avg response</div><div class="v num">–</div><div class="s">&nbsp;</div></div>
+        <div class="kpi" id="k-conn"><div class="t">Connections</div><div class="v num">–</div><div class="s">&nbsp;</div></div>
+      </div>
+
+      <div class="cols">
+        <div class="stack-y">
+          <div class="card">
+            <div class="card-h">
+              <h2>Live · last 10 minutes</h2>
+              <div class="seg" id="chart-tabs">
+                <button class="on" data-chart="requests">Requests</button>
+                <button data-chart="traffic">Bandwidth</button>
+              </div>
+            </div>
+            <div class="legend" id="legend"></div>
+            <canvas id="chart"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Sites</h2><a data-go="sites">Details →</a></div>
+            <ul class="rows" id="sites-home"></ul>
+          </div>
+        </div>
+        <div class="stack-y">
+          <div class="card">
+            <div class="card-h"><h2>Server</h2><a data-go="procs">Processes →</a></div>
+            <div class="res" id="res"></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Security</h2><small>rate limiter</small></div>
+            <ul class="kv" id="kv-sec"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SITES -->
+    <section class="page stack-y" id="page-sites">
+      <div class="card">
+        <div class="card-h"><h2>Sites</h2><small>/etc/haproxy/hosts.map</small></div>
+        <ul class="rows" id="sites-full"></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Backend servers</h2><small>health checks</small></div>
+        <ul class="rows" id="servers"></ul>
+      </div>
+    </section>
+
+    <!-- PROCESSES -->
+    <section class="page stack-y" id="page-procs">
+      <div class="card facts">
+        <div class="fact"><div class="t">Tasks</div><div class="v num" id="f-tasks">–</div></div>
+        <div class="fact"><div class="t">Load average</div><div class="v num" id="f-load">–</div></div>
+        <div class="fact"><div class="t">CPU</div><div class="v num" id="f-cpu">–</div></div>
+        <div class="fact"><div class="t">Uptime</div><div class="v num" id="f-up">–</div></div>
+      </div>
+      <div class="meters">
+        <div class="card">
+          <div class="card-h"><h2>CPU</h2><small id="cpu-cores">—</small></div>
+          <div class="meter-list" id="m-cpu"></div>
+          <div class="meter-legend"><span><i style="background:var(--c1)"></i>user</span><span><i style="background:var(--c2)"></i>system</span><span><i style="background:var(--c4)"></i>io wait</span><span><i style="background:var(--c5)"></i>steal</span></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Memory</h2><small id="mem-total">—</small></div>
+          <div class="meter-list" id="m-mem"></div>
+          <div class="meter-legend"><span><i style="background:var(--c1)"></i>used</span><span><i style="background:var(--c4)"></i>buffers</span><span><i style="background:var(--c3)"></i>cache</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <input class="search" id="proc-q" type="search" placeholder="Filter by command, user or PID" autocomplete="off" spellcheck="false">
+          <select class="sort" id="proc-sort" aria-label="Sort by">
+            <option value="cpu">CPU</option><option value="mem">Memory</option><option value="time">Time</option><option value="pid">PID</option>
+          </select>
+        </div>
+        <div class="proc-wrap">
+          <table class="procs">
+            <thead><tr>
+              <th data-sort="pid">PID</th><th data-sort="user" style="text-align:left">User</th><th data-sort="nice">NI</th>
+              <th data-sort="threads">THR</th><th data-sort="mem">RES</th><th data-sort="cpu" class="on">CPU%</th>
+              <th data-sort="mem">MEM%</th><th data-sort="time">TIME+</th><th>S</th><th class="cmd" data-sort="cmd">Command</th>
+            </tr></thead>
+            <tbody id="proc-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CRON -->
+    <section class="page stack-y" id="page-cron">
+      <div class="card facts">
+        <div class="fact"><div class="t">Next up</div><div class="v num ell" id="cf-next">–</div><div class="s ell muted" id="cf-next-s" style="font-size:12px">&nbsp;</div></div>
+        <div class="fact"><div class="t">Cron jobs</div><div class="v num" id="cf-jobs">–</div><div class="s ell muted" id="cf-jobs-s" style="font-size:12px">&nbsp;</div></div>
+        <div class="fact"><div class="t">Systemd timers</div><div class="v num" id="cf-timers">–</div><div class="s ell muted" id="cf-timers-s" style="font-size:12px">&nbsp;</div></div>
+        <div class="fact"><div class="t">Periodic scripts</div><div class="v num" id="cf-scripts">–</div><div class="s ell muted" id="cf-scripts-s" style="font-size:12px">&nbsp;</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>User cron jobs</h2><small id="cron-user-n">crontab -e</small></div>
+        <ul class="rows" id="cron-user"></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>System cron jobs</h2><small id="cron-sys-n">/etc/crontab · /etc/cron.d</small></div>
+        <ul class="rows" id="cron-system"></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Systemd timers</h2><small>scheduled system tasks</small></div>
+        <ul class="rows" id="cron-timers"></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Periodic scripts</h2><small>/etc/cron.*</small></div>
+        <ul class="rows" id="cron-periodic"></ul>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page stack-y" id="page-settings">
+      <div class="card">
+        <div class="card-h"><h2>Server</h2></div>
+        <form class="form" id="name-form" autocomplete="off">
+          <div class="field">
+            <label for="name-input">Server name</label>
+            <p class="hint">Shown across the dashboard and used as the app name when you install it on a phone or computer.</p>
+            <div class="field-row">
+              <input class="input" id="name-input" maxlength="32" required placeholder="e.g. US East 1" spellcheck="false">
+              <button class="btn" id="name-save" type="submit">Save</button>
+            </div>
+            <div class="form-msg" id="name-msg"></div>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Network</h2><small>public addresses</small></div>
+        <ul class="kv" id="kv-net"></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>App</h2></div>
+        <ul class="kv" id="kv-app"></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Password</h2><small>signs out other devices</small></div>
+        <form class="form" id="pw-form" autocomplete="on">
+          <input type="text" name="username" value="admin" autocomplete="username" hidden>
+          <div class="field">
+            <label for="pw-current">Current password</label>
+            <div class="field-row"><input class="input" id="pw-current" type="password" autocomplete="current-password" required></div>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label for="pw-new">New password</label>
+            <p class="hint">At least 10 characters. A few random words work well.</p>
+            <div class="field-row"><input class="input" id="pw-new" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+            <div class="pw-meter"><div id="pw-bar"></div></div>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label for="pw-confirm">Confirm new password</label>
+            <div class="field-row">
+              <input class="input" id="pw-confirm" type="password" autocomplete="new-password" required>
+              <button class="btn" id="pw-save" type="submit">Change password</button>
+            </div>
+            <div class="form-msg" id="pw-msg"></div>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Session</h2><small id="sess-count">signed in as admin</small></div>
+        <div class="form">
+          <p class="hint" style="margin:0 0 12px;color:var(--muted);font-size:12px">Signing out ends the session on the server. Sessions otherwise expire after 14 days.</p>
+          <div class="field-row">
+            <button class="btn btn-danger" type="button" data-logout>Sign out</button>
+            <button class="btn btn-ghost" type="button" data-logout="all">Sign out all devices</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CERTIFICATES -->
+    <section class="page stack-y" id="page-ssl">
+      <div class="card">
+        <div class="card-h"><h2>Certificates</h2><small>/etc/haproxy/certs</small></div>
+        <ul class="rows" id="certs"></ul>
+      </div>
+    </section>
+
+    <!-- SYSTEM -->
+    <section class="page stack-y" id="page-system">
+      <div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        <div class="card"><div class="card-h"><h2>HAProxy</h2><small id="hap-ver">—</small></div><ul class="kv" id="kv-hap"></ul></div>
+        <div class="card"><div class="card-h"><h2>Server</h2><small id="srv-name2">—</small></div><ul class="kv" id="kv-srv"></ul></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav class="tabbar">
+  <a data-page="home" class="active"><svg class="i"><use href="#i-home"/></svg>Overview</a>
+  <a data-page="sites"><svg class="i"><use href="#i-globe"/></svg>Sites</a>
+  <a data-page="procs"><svg class="i"><use href="#i-list"/></svg>Processes</a>
+  <a data-page="cron"><svg class="i"><use href="#i-clock"/></svg>Cron</a>
+  <a data-page="ssl"><svg class="i"><use href="#i-lock"/></svg>Certs</a>
+  <a data-page="system"><svg class="i"><use href="#i-cpu"/></svg>System</a>
+</nav>
+
+<script>
+const LIVE_URL = "/hapanel/live";
+const KEEP = 600, WINDOW = 300;                       // 1 sample/s: 10 min chart, 5 min window
+// ---- Settings: adjust to match your haproxy.cfg ----
+const HIDDEN = new Set(["be_default", "stats_local"]);   // internal frontends/backends not shown as sites
+const RATE_LIMIT_LABEL = "200 req / 10s per IP";         // describes your rate-limit rule (Security card)
+const RENEWAL_CRON = "acme.sh --cron";                   // cron command that renews certificates ("" = skip check)
+// Thresholds for the health verdict
+const T = { err: [1, 5], lat: [500, 1500], cpu: [75, 90], mem: [80, 90], disk: [80, 90], conn: [70, 90], cert: [20, 7] };
+const hist = { t: [], req: [], e5: [], rx: [], tx: [], cpu: [], deny: [] };
+let chartMode = "requests", prev = null, es = null, lastMsg = 0, procSort = "cpu", lastSys = null;
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const n = v => Number(v) || 0;
+const fmt = v => Math.round(n(v)).toLocaleString();
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const sum = a => a.reduce((x, y) => x + y, 0);
+const tail = (a, k) => a.slice(-k);
+function size(v, dec = 1) {
+  let x = n(v), u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+  while (x >= 1024 && i < u.length - 1) { x /= 1024; i++; }
+  return x.toFixed(i ? dec : 0) + " " + u[i];
+}
+function sizeShort(v) {   // htop-style RES: 512K, 13M, 1.2G
+  const x = n(v) / 1024;
+  return x < 1024 ? Math.round(x) + "K" : x < 1024 * 1024 ? (x / 1024).toFixed(x < 10240 ? 1 : 0) + "M" : (x / 1048576).toFixed(1) + "G";
+}
+function dur(sec) {
+  sec = Math.floor(n(sec));
+  const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60);
+  return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+}
+function cpuTime(sec) {   // htop TIME+: m:ss.cc or h:mm:ss
+  sec = n(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h ? `${h}h${String(m).padStart(2, "0")}:${String(Math.floor(s)).padStart(2, "0")}` : `${m}:${s.toFixed(2).padStart(5, "0")}`;
+}
+const lvl = (v, [w, b]) => v >= b ? "bad" : v >= w ? "warn" : "";
+const lvlLow = (v, [w, b]) => v < b ? "bad" : v < w ? "warn" : "";
+const isUp = s => String(s || "").toUpperCase().startsWith("UP");
+const rate = v => v >= 100 ? fmt(v) : v.toFixed(1);
+function certFor(host, certs) {
+  return certs.find(c => c.names.some(nm => nm === host || (nm.startsWith("*.") && host.endsWith(nm.slice(1)) &&
+                                         host.split(".").length === nm.split(".").length)));
+}
+const kv = (id, rows) => $(id).innerHTML = rows.map(([k, v]) => `<li><span>${k}</span><b class="num">${v}</b></li>`).join("");
+function kpi(id, value, unit, sub, cls) {
+  const el = $(id);
+  el.className = "kpi" + (cls ? " " + cls : "");
+  el.querySelector(".v").innerHTML = `${value}${unit ? `<small>${unit}</small>` : ""}`;
+  el.querySelector(".s").textContent = sub;
+}
+const rows = (id, items, empty) => $(id).innerHTML = items.length ? items.join("") : `<li class="empty">${empty}</li>`;
+const segBar = (parts, cls = "") => `<div class="bar ${cls}">${parts.filter(([p]) => p > 0)
+  .map(([p, c]) => `<div style="width:${Math.min(100, p)}%${c ? `;background:var(${c})` : ""}"></div>`).join("")}</div>`;
+
+/* ---------- theme + navigation ---------- */
+const THEMES = ["auto", "light", "dark"];
+function setTheme(t) {
+  if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  try { t === "auto" ? localStorage.removeItem("hapanel-theme") : localStorage.setItem("hapanel-theme", t); } catch (e) {}
+  $("theme-btn").innerHTML = `<svg class="i"><use href="#i-${t === "auto" ? "auto" : t === "light" ? "sun" : "moon"}"/></svg>`;
+  $("theme-btn").title = "Theme: " + t;
+  drawChart();
+}
+$("theme-btn").onclick = () => setTheme(THEMES[(THEMES.indexOf(document.documentElement.dataset.theme || "auto") + 1) % 3]);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawChart);
+
+const titles = { home: "Overview", sites: "Sites", procs: "Processes", cron: "Cron jobs", ssl: "Certificates", system: "System", settings: "Settings" };
+function go(page, push = true) {
+  if (!titles[page]) page = "home";
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + page));
+  document.querySelectorAll("[data-page]").forEach(a => a.classList.toggle("active", a.dataset.page === page));
+  $("title").textContent = titles[page];
+  $("title").dataset.page = page;
+  document.title = page === "home" ? serverName : `${titles[page]} · ${serverName}`;
+  if (push && location.hash !== "#" + page) history.replaceState(null, "", page === "home" ? location.pathname : "#" + page);
+  try { localStorage.setItem("hapanel-page", page); } catch (e) {}
+  scrollTo({ top: 0 });
+  if (page === "home") requestAnimationFrame(drawChart);
+  if (page === "procs" && lastSys) renderProcs(lastSys);
+  if (page === "cron" && lastSys) renderCron(lastSys);
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-page],[data-go]");
+  if (t) { e.preventDefault(); go(t.dataset.page || t.dataset.go); }
+});
+addEventListener("hashchange", () => go(location.hash.slice(1) || "home", false));
+$("chart-tabs").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  chartMode = b.dataset.chart;
+  document.querySelectorAll("#chart-tabs button").forEach(x => x.classList.toggle("on", x === b));
+  drawChart();
+};
+
+/* ---------- PWA: service worker + install button ---------- */
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/hapanel/sw.js", { scope: "/hapanel/" }).catch(() => {});
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("install-btn").style.display = "inline-flex"; });
+$("install-btn").onclick = async () => {
+  if (!installEvt) return;
+  installEvt.prompt(); await installEvt.userChoice; installEvt = null; $("install-btn").style.display = "none";
+};
+addEventListener("appinstalled", () => { $("install-btn").style.display = "none"; });
+
+/* ---------- chart ---------- */
+function drawChart() {
+  const cv = $("chart"); if (!cv.offsetParent) return;
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  const st = getComputedStyle(cv), pad = parseFloat(st.paddingLeft), padB = parseFloat(st.paddingBottom);
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d"); g.scale(dpr, dpr); g.clearRect(0, 0, W, H);
+  const last = a => a.length ? a[a.length - 1] : 0;
+  let series, unit;
+  if (chartMode === "requests") {
+    series = [{ d: hist.req, c: css("--c1"), name: "Requests" }, { d: hist.e5, c: css("--c2"), name: "5xx errors" }];
+    unit = v => rate(n(v)) + "/s";
+  } else {
+    series = [{ d: hist.tx, c: css("--c3"), name: "Out" }, { d: hist.rx, c: css("--c4"), name: "In" }];
+    unit = v => size(v, 1) + "/s";
+  }
+  $("legend").innerHTML = series.map(s => `<span><i style="background:${s.c}"></i>${s.name} <b class="num">${unit(last(s.d))}</b></span>`).join("");
+
+  const narrow = W < 420, L = pad + (narrow ? 48 : 60), R = pad + 2, Tp = 8, B = padB + 18, w = W - L - R, h = H - Tp - B;
+  const max = Math.max(1e-9, ...series.flatMap(s => s.d)) * 1.15;
+  g.font = "11px ui-sans-serif, system-ui, sans-serif"; g.fillStyle = css("--muted"); g.strokeStyle = css("--grid"); g.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = Math.round(Tp + h * i / 3) + .5;
+    g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke();
+    g.textAlign = "right"; g.fillText(unit(max * (3 - i) / 3), L - 8, y + 4);
+  }
+  const nPts = hist.t.length, step = w / (KEEP - 1), x0 = L + w - (nPts - 1) * step;
+  g.textAlign = "center";
+  for (let i = nPts - 1; i >= 0; i -= narrow ? 210 : 150)
+    g.fillText(hist.t[i].toTimeString().slice(0, 5), Math.min(W - R - 16, x0 + i * step), H - padB - 2);
+  if (nPts < 2) return;
+  for (const s of series) {
+    const pts = s.d.map((v, i) => [x0 + i * step, Tp + h - v / max * h]);
+    g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+    g.strokeStyle = s.c; g.lineWidth = 1.6; g.lineJoin = "round"; g.stroke();
+    g.lineTo(pts[pts.length - 1][0], Tp + h); g.lineTo(pts[0][0], Tp + h); g.closePath();
+    const grad = g.createLinearGradient(0, Tp, 0, Tp + h);
+    grad.addColorStop(0, s.c + "2e"); grad.addColorStop(1, s.c + "00");
+    g.fillStyle = grad; g.fill();
+  }
+}
+addEventListener("resize", drawChart);
+
+/* ---------- processes (htop-style) ---------- */
+const SORTS = {
+  cpu: (a, b) => b.cpu - a.cpu || b.rss - a.rss, mem: (a, b) => b.rss - a.rss, time: (a, b) => b.time - a.time,
+  pid: (a, b) => a.pid - b.pid, user: (a, b) => a.user.localeCompare(b.user) || b.cpu - a.cpu,
+  nice: (a, b) => a.nice - b.nice, threads: (a, b) => b.threads - a.threads, cmd: (a, b) => a.cmd.localeCompare(b.cmd),
+};
+function setSort(key) {
+  procSort = key;
+  $("proc-sort").value = SORTS[key] && ["cpu", "mem", "time", "pid"].includes(key) ? key : $("proc-sort").value;
+  document.querySelectorAll(".procs th").forEach(th => th.classList.toggle("on", th.dataset.sort === key && (key !== "mem" || th.textContent === "MEM%")));
+  if (lastSys) renderProcs(lastSys);
+}
+document.querySelector(".procs thead").onclick = e => { const th = e.target.closest("th[data-sort]"); if (th) setSort(th.dataset.sort); };
+$("proc-sort").onchange = e => setSort(e.target.value);
+$("proc-q").oninput = () => lastSys && renderProcs(lastSys);
+
+function renderProcs(sys) {
+  const cores = sys.cpu_cores || [], cd = sys.cpu_detail || {}, m = sys.mem || {}, tk = sys.tasks || {};
+  $("f-tasks").innerHTML = `${fmt(tk.user)} <small>${fmt(tk.threads)} thr · ${fmt(tk.running)} running</small>`;
+  $("f-load").textContent = (sys.load || []).map(x => x.toFixed(2)).join("  ");
+  $("f-cpu").innerHTML = `${n(sys.cpu).toFixed(1)}<small>%</small>`;
+  $("f-up").textContent = dur(sys.uptime);
+  $("cpu-cores").textContent = `${cores.length} cores`;
+  $("mem-total").textContent = size(m.total);
+
+  // Per-core busy bars, plus the total split into user / system / io wait / steal
+  $("m-cpu").innerHTML =
+    `<div class="meter"><span class="l">All</span>${segBar([[cd.user, "--c1"], [cd.system, "--c2"], [cd.iowait, "--c4"], [cd.steal, "--c5"]])}<span class="v">${n(cd.busy).toFixed(1)}%</span></div>` +
+    cores.map((c, i) => `<div class="meter"><span class="l">${i + 1}</span>${segBar([[c, ""]], lvl(c, T.cpu))}<span class="v">${c.toFixed(1)}%</span></div>`).join("");
+  const pct = v => 100 * n(v) / Math.max(1, n(m.total));
+  const swapPct = 100 * n(m.swap_used) / Math.max(1, n(m.swap_total));
+  $("m-mem").innerHTML =
+    `<div class="meter"><span class="l">Mem</span>${segBar([[pct(m.used), "--c1"], [pct(m.buffers), "--c4"], [pct(m.cached), "--c3"]])}<span class="v">${sizeShort(m.used)}/${sizeShort(m.total)}</span></div>` +
+    `<div class="meter"><span class="l">Swap</span>${segBar([[swapPct, "--c2"]])}<span class="v">${m.swap_total ? `${sizeShort(m.swap_used)}/${sizeShort(m.swap_total)}` : "none"}</span></div>` +
+    `<div class="meter"><span class="l">Disk</span>${segBar([[100 * n(sys.disk?.used) / Math.max(1, n(sys.disk?.total)), ""]], lvl(100 * n(sys.disk?.used) / Math.max(1, n(sys.disk?.total)), T.disk))}<span class="v">${sizeShort(sys.disk?.used)}/${sizeShort(sys.disk?.total)}</span></div>`;
+
+  if (!$("page-procs").classList.contains("active")) return;
+  const q = $("proc-q").value.trim().toLowerCase();
+  const list = (sys.procs || []).filter(p => !q || p.cmd.toLowerCase().includes(q) || p.user.toLowerCase().includes(q) || String(p.pid) === q)
+    .sort(SORTS[procSort] || SORTS.cpu);
+  const heat = (v, w, b) => v >= b ? "hot" : v >= w ? "warm" : "";
+  const cmd = c => { const sp = c.indexOf(" "), exe = sp < 0 ? c : c.slice(0, sp), base = exe.split("/").pop();
+    return `${esc(exe.slice(0, exe.length - base.length))}<b>${esc(base)}</b><span>${esc(sp < 0 ? "" : c.slice(sp))}</span>`; };
+  $("proc-rows").innerHTML = list.length ? list.map(p => `<tr>
+      <td>${p.pid}</td><td style="text-align:left" class="${p.user === "root" ? "user-root" : ""}">${esc(p.user)}</td>
+      <td>${p.nice}</td><td>${p.threads}</td><td>${sizeShort(p.rss)}</td>
+      <td class="cpu ${heat(p.cpu, 25, 75)}">${p.cpu.toFixed(1)}</td><td class="mem ${heat(p.mem, 20, 50)}">${p.mem.toFixed(1)}</td>
+      <td>${cpuTime(p.time)}</td><td class="st-${esc(p.state)}">${esc(p.state)}</td>
+      <td class="cmd" title="${esc(p.cmd)}">${cmd(p.cmd)}</td>
+      <td class="meta">${p.pid} · ${esc(p.user)} · ${sizeShort(p.rss)} · ${p.threads} thr · ${cpuTime(p.time)} · ${esc(p.state)}</td></tr>`).join("")
+    : `<tr><td class="cmd" colspan="10" style="text-align:center;color:var(--muted);padding:22px">No matching processes</td></tr>`;
+}
+
+/* ---------- cron ---------- */
+function rel(iso, future) {     // "in 3h 12m" / "5m ago"
+  if (!iso) return "—";
+  const s = Math.round((Date.parse(iso) - Date.now()) / 1000) * (future ? 1 : -1);
+  if (s < 0) return future ? "now" : "just now";
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  const t = d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : m ? `${m}m` : `${s}s`;
+  return future ? "in " + t : t + " ago";
+}
+const clock = iso => iso ? new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "";
+function cronLabel(cmd) {       // friendly names for well-known jobs
+  if (cmd.includes("acme.sh")) return "Certificate renewal (acme.sh)";
+  const rp = cmd.match(/run-parts .*\/etc\/cron\.(\w+)/);
+  if (rp) return `${rp[1][0].toUpperCase() + rp[1].slice(1)} scripts (/etc/cron.${rp[1]})`;
+  if (cmd.includes("e2scrub")) return "Filesystem check (e2scrub)";
+  return null;
+}
+function renderCron(sys) {
+  const c = sys.cron || {}, jobs = c.jobs || [], timers = c.timers || [];
+  if (!$("page-cron").classList.contains("active")) return;
+  // User jobs come from personal crontabs (crontab -e); system jobs from /etc/crontab and /etc/cron.d (packages)
+  const isUser = j => j.source.startsWith("crontab:");
+  const userJobs = jobs.filter(isUser), sysJobs = jobs.filter(j => !isUser(j));
+
+  /* summary */
+  const nameOf = j => j.unit ? j.unit.replace(/\.timer$/, "") : cronLabel(j.command) || j.command;
+  const upcoming = [...jobs.filter(j => j.next), ...timers.filter(t => t.next)].sort((a, b) => Date.parse(a.next) - Date.parse(b.next));
+  const nx = upcoming[0];
+  $("cf-next").textContent = nx ? rel(nx.next, true) : "—";
+  $("cf-next-s").textContent = nx ? nameOf(nx) : "nothing scheduled";
+  $("cf-next-s").title = nx ? nameOf(nx) : "";
+  const dayAgo = Date.now() - 86400e3;
+  const ranToday = jobs.filter(j => j.last && Date.parse(j.last) > dayAgo).length;
+  $("cf-jobs").textContent = jobs.length;
+  $("cf-jobs-s").textContent = `${userJobs.length} user · ${sysJobs.length} system · ${ranToday} ran in 24h`;
+  $("cron-user-n").textContent = `${userJobs.length} · ${[...new Set(userJobs.map(j => j.user))].join(", ") || "none"} · crontab -e`;
+  $("cron-sys-n").textContent = `${sysJobs.length} · /etc/crontab · /etc/cron.d`;
+  const tDay =timers.filter(t => t.next && Date.parse(t.next) - Date.now() < 86400e3).length;
+  $("cf-timers").textContent = timers.length;
+  $("cf-timers-s").textContent = `${tDay} due in next 24h`;
+  const per = c.periodic || {}, scriptN = Object.values(per).reduce((a, f) => a + f.length, 0);
+  $("cf-scripts").textContent = scriptN;
+  $("cf-scripts-s").textContent = Object.entries(per).filter(([, f]) => f.length).map(([k, f]) => `${f.length} ${k}`).join(" · ") || "none";
+
+  const soon = iso => iso && Date.parse(iso) - Date.now() < 3600e3;
+  const jobItem = j => {
+    const label = cronLabel(j.command);
+    return `<li><div class="grow">
+        <div class="t ell">${esc(label || j.command)}</div>
+        <div class="s ell">${label ? `<span class="cmdline" title="${esc(j.command)}">${esc(j.command)}</span>` : ""}</div>
+        <div class="chips" style="margin-top:6px"><span class="code" title="${esc(j.schedule)}">${esc(j.schedule)}</span>
+          <span class="s">${esc(j.human)} · ${esc(j.user)} · ${esc(j.source)}</span></div></div>
+      <div class="when"><span class="${soon(j.next) ? "soon" : ""}" style="display:inline;font-size:13px;color:${soon(j.next) ? "" : "var(--text)"}">${j.schedule === "@reboot" ? "at boot" : rel(j.next, true)}</span>
+        <span>${clock(j.next)}</span><span>last: ${j.last ? rel(j.last) : "not in log"}</span></div></li>`;
+  };
+  rows("cron-user", userJobs.map(jobItem), "No user cron jobs. Add one with <span class=\"code\">crontab -e</span>");
+  rows("cron-system", sysJobs.map(jobItem), "No system cron jobs");
+  rows("cron-timers", timers.map(t => `<li><div class="grow"><div class="t ell">${esc((t.unit || "").replace(/\.timer$/, ""))}</div>
+        <div class="s ell">runs ${esc(t.activates)}</div></div>
+      <div class="when"><span class="${soon(t.next) ? "soon" : ""}" style="display:inline;font-size:13px;color:${soon(t.next) ? "" : "var(--text)"}">${t.next ? rel(t.next, true) : "on demand"}</span>
+        <span>${clock(t.next)}</span><span>last: ${t.last ? rel(t.last) : "never"}</span></div></li>`), "No timers");
+  rows("cron-periodic", Object.entries(c.periodic || {}).map(([k, files]) => `<li><div class="grow">
+      <div class="t">cron.${esc(k)}</div><div class="s">${files.length ? files.map(esc).join(" · ") : "empty"}</div></div>
+      <div class="m num">${files.length}<span>scripts</span></div></li>`), "No periodic folders");
+}
+
+/* ---------- render ---------- */
+function render(px, sys) {
+  px = px.filter(r => r.pxname && !HIDDEN.has(r.pxname));
+  const fes = px.filter(r => r.svname === "FRONTEND"), bes = px.filter(r => r.svname === "BACKEND");
+  const srvs = px.filter(r => r.svname !== "FRONTEND" && r.svname !== "BACKEND")
+    .sort((a, b) => (a.pxname + a.svname).localeCompare(b.pxname + b.svname));
+  const hap = sys.haproxy || {}, certs = sys.certs || [], sites = sys.sites || [];
+  lastSys = sys;
+
+  /* per-interval deltas */
+  const cur = { at: Date.now(), req: sum(fes.map(r => n(r.req_tot))), e5: sum(bes.map(r => n(r.hrsp_5xx))),
+                deny: sum(fes.map(r => n(r.dreq))) };
+  const dt = prev ? (cur.at - prev.at) / 1000 : 0;
+  const delta = k => prev && cur[k] >= prev[k] ? cur[k] - prev[k] : 0;    // counters reset on HAProxy reload
+  const reqNow = dt > 0 ? delta("req") / dt : sum(fes.map(r => n(r.req_rate)));
+  hist.t.push(new Date()); hist.req.push(reqNow); hist.e5.push(dt > 0 ? delta("e5") / dt : 0); hist.deny.push(delta("deny"));
+  hist.rx.push(n(sys.net?.rx_rate)); hist.tx.push(n(sys.net?.tx_rate)); hist.cpu.push(n(sys.cpu));
+  for (const k in hist) if (hist[k].length > KEEP) hist[k].shift();
+  prev = cur;
+
+  /* windowed metrics (last 5 min, 1 sample per second) */
+  const winReq = sum(tail(hist.req, WINDOW)), winE5 = sum(tail(hist.e5, WINDOW));
+  const errPct = winReq > 0 ? 100 * winE5 / winReq : 0;
+  const winSec = Math.min(hist.t.length, WINDOW);
+  const live = bes.filter(b => n(b.stot) > 0);
+  const latency = live.length ? sum(live.map(b => n(b.rtime) * n(b.stot))) / sum(live.map(b => n(b.stot))) : 0;
+  const conns = n(hap.CurrConns), maxconn = n(hap.Maxconn) || 1, connPct = 100 * conns / maxconn;
+  const cpuAvg = sum(tail(hist.cpu, 10)) / Math.max(1, tail(hist.cpu, 10).length);
+  const memPct = 100 * n(sys.mem?.used) / Math.max(1, n(sys.mem?.total));
+  const diskPct = 100 * n(sys.disk?.used) / Math.max(1, n(sys.disk?.total));
+  const cores = n(sys.cores) || 1, loadPct = 100 * n(sys.load?.[0]) / cores;
+  const blocked5m = sum(tail(hist.deny, WINDOW));
+  const staleSec = sys.time ? (Date.now() - Date.parse(sys.time)) / 1000 : 0;
+
+  /* ---- health verdict ---- */
+  const issues = [];
+  const add = (sev, text) => issues.push({ sev, text });
+  for (const b of bes) if (!isUp(b.status)) add("bad", `Backend <b>${esc(b.pxname)}</b> is down: no healthy servers`);
+  for (const s of srvs) if (!isUp(s.status) && bes.some(b => b.pxname === s.pxname && isUp(b.status)))
+    add("warn", `Server <b>${esc(s.pxname)}/${esc(s.svname)}</b> is ${esc(s.status)} (${esc(s.check_status)})`);
+  if (winReq >= 20 && lvl(errPct, T.err)) add(lvl(errPct, T.err), `Error rate is <b>${errPct.toFixed(1)}%</b> over the last 5 minutes`);
+  if (lvl(latency, T.lat)) add(lvl(latency, T.lat), `Average response time is <b>${fmt(latency)} ms</b>`);
+  for (const s of sites) if (!certFor(s.host, certs)) add("bad", `<b>${esc(s.host)}</b> has no certificate`);
+  for (const c of certs) if (lvlLow(c.days_left, T.cert)) add(lvlLow(c.days_left, T.cert), `Certificate <b>${esc(c.names[0])}</b> expires in ${c.days_left} days. Check acme.sh renewal`);
+  if (lvl(cpuAvg, T.cpu)) add(lvl(cpuAvg, T.cpu), `CPU at <b>${Math.round(cpuAvg)}%</b>`);
+  if (lvl(memPct, T.mem)) add(lvl(memPct, T.mem), `Memory at <b>${Math.round(memPct)}%</b>`);
+  if (lvl(diskPct, T.disk)) add(lvl(diskPct, T.disk), `Disk at <b>${Math.round(diskPct)}%</b>`);
+  if (lvl(connPct, T.conn)) add(lvl(connPct, T.conn), `Connections at <b>${Math.round(connPct)}%</b> of the limit (${fmt(maxconn)})`);
+  if (RENEWAL_CRON && sys.cron && certs.length && !(sys.cron.jobs || []).some(j => j.command.includes(RENEWAL_CRON)))
+    add("bad", `Certificate auto-renewal cron job (${esc(RENEWAL_CRON)}) is missing. Certificates will expire`);
+  if (staleSec > 15) add("warn", `System metrics are ${Math.round(staleSec)}s old. Check <b>hapanel-collector</b>`);
+  if (blocked5m > 0) add("info", `${fmt(blocked5m)} request${blocked5m === 1 ? "" : "s"} blocked by the rate limiter in the last 5 minutes`);
+
+  const order = { bad: 0, warn: 1, info: 2 };
+  issues.sort((a, b) => order[a.sev] - order[b.sev]);
+  const worst = issues.find(i => i.sev !== "info")?.sev || "";
+  const upSrv = srvs.filter(s => isUp(s.status)).length;
+  const minCert = certs.length ? Math.min(...certs.map(c => c.days_left)) : null;
+  $("health").className = "card health" + (worst ? " " + worst : "");
+  $("health").querySelector(".ic").innerHTML = `<svg class="i"><use href="#i-${worst ? "alert" : "ok"}"/></svg>`;
+  $("health-t").textContent = worst === "bad" ? "Action needed" : worst === "warn" ? "Needs attention" : "All systems operational";
+  $("health-s").textContent = `${sites.length} site${sites.length === 1 ? "" : "s"} · ${upSrv}/${srvs.length} servers healthy` +
+    (minCert != null ? ` · certificates valid ${minCert}+ days` : "") + ` · up ${dur(sys.uptime)}`;
+  $("issues").innerHTML = issues.map(i => `<li><span class="sev ${i.sev}">${i.sev === "bad" ? "Critical" : i.sev === "warn" ? "Warning" : "Info"}</span><span>${i.text}</span></li>`).join("");
+
+  /* ---- KPIs ---- */
+  kpi("k-rps", rate(reqNow), "/s", `${fmt(winReq)} in the last ${winSec < 60 ? winSec + "s" : dur(winSec)}`);
+  kpi("k-err", winReq ? errPct.toFixed(2) : "0", "%", `${fmt(winE5)} errors, last 5 min`, winReq >= 20 ? lvl(errPct, T.err) : "");
+  kpi("k-lat", live.length ? fmt(latency) : "–", live.length ? "ms" : "", "avg of recent requests", lvl(latency, T.lat));
+  kpi("k-conn", fmt(conns), "", `${connPct < 1 ? "<1" : Math.round(connPct)}% of ${fmt(maxconn)} limit`, lvl(connPct, T.conn));
+
+  /* ---- sites ---- */
+  const beBy = Object.fromEntries(bes.map(b => [b.pxname, b]));
+  const siteItem = (s, full) => {
+    const b = beBy[s.backend] || {}, mine = srvs.filter(x => x.pxname === s.backend), up = mine.filter(x => isUp(x.status)).length;
+    const c = certFor(s.host, certs), tot = n(b.hrsp_1xx) + n(b.hrsp_2xx) + n(b.hrsp_3xx) + n(b.hrsp_4xx) + n(b.hrsp_5xx);
+    const e = tot ? 100 * n(b.hrsp_5xx) / tot : 0;
+    const st = !b.status || !isUp(b.status) ? "bad" : up < mine.length ? "warn" : "";
+    const cert = !c ? `<span class="pill bad">no SSL</span>` : `<span class="pill ${lvlLow(c.days_left, T.cert)}">SSL ${c.days_left}d</span>`;
+    return `<li><span class="sdot ${st}"></span>
+      <div class="grow"><a class="t ell" style="display:block" href="https://${esc(s.host)}" target="_blank" rel="noopener">${esc(s.host)}</a>
+        <div class="s ell">${st === "bad" ? "Down" : `${up}/${mine.length} servers`}${full ? ` · ${esc(s.backend)}` : ""}</div></div>
+      <div class="m num">${fmt(b.rate)}/s<span>traffic</span></div>
+      <div class="m num ${e >= T.err[1] ? "err" : e >= T.err[0] ? "wrn" : ""}">${e.toFixed(1)}%<span>5xx</span></div>
+      <div class="m num opt">${fmt(b.rtime)}ms<span>resp</span></div>
+      ${full ? `<div class="m num opt">${size(b.bout, 0)}<span>sent</span></div>` : ""}
+      <div class="m">${cert}</div></li>`;
+  };
+  rows("sites-home", sites.map(s => siteItem(s, false)), "No sites yet. Add one in /etc/haproxy/hosts.map");
+  rows("sites-full", sites.map(s => siteItem(s, true)), "No sites yet. Add one in /etc/haproxy/hosts.map");
+  rows("servers", srvs.map(s => `<li><span class="sdot ${isUp(s.status) ? "" : "bad"}"></span>
+      <div class="grow"><div class="t ell">${esc(s.pxname)} / ${esc(s.svname)}</div>
+        <div class="s ell">${esc(s.status)} · ${esc(s.check_status)}${s.check_duration !== "" && s.check_duration != null ? " in " + esc(s.check_duration) + " ms" : ""} · changed ${dur(s.lastchg)} ago</div></div>
+      <div class="m num">${fmt(s.scur)}<span>conns</span></div>
+      <div class="m num">${fmt(s.rtime)}ms<span>resp</span></div></li>`), "No backend servers");
+
+  /* ---- certificates ---- */
+  rows("certs", certs.slice().sort((a, b) => a.days_left - b.days_left).map(c => `<li>
+      <span class="sdot ${lvlLow(c.days_left, T.cert)}"></span>
+      <div class="grow"><div class="t ell">${c.names.map(esc).join(", ")}</div>
+        <div class="s ell">${esc(c.issuer)} · expires ${new Date(c.expires).toLocaleDateString()}</div></div>
+      <div class="m"><span class="pill ${lvlLow(c.days_left, T.cert)}">${c.days_left} days</span></div></li>`), "No certificates");
+
+  /* ---- server resources ---- */
+  const bar = (label, pct, detail, th) => `<div class="bar-row"><div class="bar-h"><b>${label}</b><span class="num">${detail}</span></div>
+      ${segBar([[Math.max(1, pct), ""]], lvl(pct, th))}</div>`;
+  $("res").innerHTML =
+    bar("CPU", cpuAvg, `${Math.round(cpuAvg)}% · ${cores} cores`, T.cpu) +
+    bar("Memory", memPct, `${size(sys.mem?.used)} / ${size(sys.mem?.total)}`, T.mem) +
+    bar("Disk", diskPct, `${size(sys.disk?.used)} / ${size(sys.disk?.total, 0)}`, T.disk) +
+    bar("Load", loadPct, (sys.load || []).map(x => x.toFixed(2)).join(" · "), [70, 100]);
+  $("srv-name2").textContent = sys.hostname || "";
+
+  /* ---- security ---- */
+  kv("kv-sec", [
+    ["Blocked, last 5 min", `<span class="${blocked5m ? "wrn" : ""}">${fmt(blocked5m)}</span>`],
+    ["Blocked since start", fmt(cur.deny)],
+    ["Bad requests", fmt(sum(fes.map(f => n(f.ereq))))],
+    ["Limit", esc(RATE_LIMIT_LABEL)],
+  ]);
+
+  /* ---- system ---- */
+  const https = fes.find(f => f.pxname === "https") || {};
+  const ver = String(hap.Version || "").split("-")[0];
+  $("hap-ver").textContent = "v" + ver;
+  $("side-foot").textContent = `HAProxy ${ver} · up ${hap.Uptime || ""}`;
+  kv("kv-hap", [
+    ["Uptime", esc(hap.Uptime || "—")],
+    ["Active connections", `${fmt(conns)} / ${fmt(maxconn)}`],
+    ["Connections / s", `${fmt(hap.ConnRate)} <span class="muted">peak ${fmt(hap.MaxConnRate)}</span>`],
+    ["Total requests", fmt(hap.CumReq)],
+    ["SSL connections", fmt(hap.CurrSslConns)],
+    ["SSL handshakes / s", `${fmt(hap.SslRate)} <span class="muted">peak ${fmt(hap.MaxSslRate)}</span>`],
+    ["SSL session reuse", n(hap.SslFrontendSessionReuse_pct) + "%"],
+    ["Threads", fmt(hap.Nbthread)],
+    ["Idle", n(hap.Idle_pct) + "%"],
+    ["Memory", size(sys.haproxy_rss)],
+    ["Traffic in / out", `${size(https.bin)} / ${size(https.bout)}`],
+  ]);
+  kv("kv-srv", [
+    ["Hostname", esc(sys.hostname)],
+    ...(sys.ips || []).map(ip => [`${ip.family} (${esc(ip.iface)})`, ipCell(ip.addr)]),
+    ["System", esc(sys.os)],
+    ["Kernel", esc(sys.kernel)],
+    ["Uptime", dur(sys.uptime)],
+    ["CPU", `${n(sys.cpu).toFixed(1)}% · ${cores} cores`],
+    ["Load average", (sys.load || []).map(x => x.toFixed(2)).join(" / ")],
+    ["Memory", `${size(sys.mem?.used)} / ${size(sys.mem?.total)}`],
+    ["Swap", sys.mem?.swap_total ? `${size(sys.mem.swap_used)} / ${size(sys.mem.swap_total)}` : "none"],
+    ["Disk", `${size(sys.disk?.used)} / ${size(sys.disk?.total)}`],
+    ["Network now", `↑ ${size(sys.net?.tx_rate)}/s · ↓ ${size(sys.net?.rx_rate)}/s`],
+    ["Network total", `↑ ${size(sys.net?.tx_total)} · ↓ ${size(sys.net?.rx_total)}`],
+  ]);
+
+  renderProcs(sys);
+  renderCron(sys);
+  drawChart();
+}
+
+/* ---------- server name, IP, settings ---------- */
+let serverName = $("brand-name").textContent, nameDirty = false;
+const ipCell = addr => `<span class="ip-copy" data-copy="${esc(addr)}">${esc(addr)}</span> <button class="copy-btn" data-copy="${esc(addr)}" aria-label="Copy"><svg class="i"><use href="#i-copy"/></svg></button>`;
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-copy]");
+  if (!t) return;
+  try {
+    await navigator.clipboard.writeText(t.dataset.copy);
+    const label = t.classList.contains("ip-copy") ? t : null;
+    if (label) { const old = label.textContent; label.textContent = "Copied"; label.classList.add("copied");
+                 setTimeout(() => { label.textContent = old; label.classList.remove("copied"); }, 1200); }
+  } catch (err) {}
+});
+function applySettings(settings, sys) {
+  if (settings?.name && settings.name !== serverName) serverName = settings.name;
+  $("brand-name").textContent = $("top-name").textContent = serverName;
+  const pg = $("title").dataset.page || "home";
+  document.title = pg === "home" ? serverName : `${titles[pg]} · ${serverName}`;
+  if (!nameDirty && document.activeElement !== $("name-input")) $("name-input").value = serverName;
+  const ips = sys?.ips || [], v4 = ips.find(i => i.family === "IPv4") || ips[0];
+  if (v4) for (const id of ["side-ip", "top-ip"]) { const el = $(id); if (!el.classList.contains("copied")) { el.textContent = v4.addr; el.dataset.copy = v4.addr; } }
+  kv("kv-net", ips.length ? ips.map(ip => [`${ip.family} · ${esc(ip.iface)}`, ipCell(ip.addr)]).concat([["Dashboard", esc(location.host)]])
+    : [["Addresses", "—"]]);
+  const sessN = settings?.sessions;
+  if (sessN != null) $("sess-count").textContent = `admin · ${sessN} active session${sessN === 1 ? "" : "s"}`;
+  kv("kv-app", [
+    ["Installed name", esc(serverName)],
+    ["Running as app", matchMedia("(display-mode: standalone)").matches ? "Yes" : "No (in browser)"],
+    ["Theme", esc(document.documentElement.dataset.theme || "auto")],
+  ]);
+}
+$("name-input").addEventListener("input", () => { nameDirty = true; $("name-msg").textContent = ""; $("name-msg").className = "form-msg"; });
+$("name-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("name-input").value.trim(), msg = $("name-msg");
+  if (!name) { msg.textContent = "Enter a name."; msg.className = "form-msg bad"; return; }
+  $("name-save").disabled = true;
+  try {
+    const res = await fetch("/hapanel/settings", { method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "text/plain;charset=utf-8", "X-HAPanel": "1" }, body: name });
+    if (res.status === 401) return toLogin("expired=1");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+    serverName = data.name; nameDirty = false;
+    applySettings({ name: serverName }, lastSys);
+    msg.className = "form-msg ok";
+    msg.textContent = matchMedia("(display-mode: standalone)").matches || navigator.standalone
+      ? "Saved. The installed app picks up the new name on its next update (on iPhone, re-add it to the Home Screen)."
+      : "Saved.";
+  } catch (err) {
+    msg.textContent = "Couldn't save: " + err.message; msg.className = "form-msg bad";
+  } finally { $("name-save").disabled = false; }
+});
+
+/* ---------- change password ---------- */
+function pwScore(p) {      // rough strength: length + character variety
+  let s = Math.min(p.length, 20) * 4;
+  s += [/[a-z]/, /[A-Z]/, /\d/, /[^\w\s]/, /\s/].filter(r => r.test(p)).length * 8;
+  return Math.min(100, p.length < 10 ? Math.min(s, 30) : s);
+}
+$("pw-new").addEventListener("input", () => {
+  const sc = pwScore($("pw-new").value), bar = $("pw-bar");
+  bar.style.width = sc + "%";
+  bar.style.background = `var(${sc >= 75 ? "--accent" : sc >= 45 ? "--warn" : "--bad"})`;
+});
+$("pw-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("pw-msg"), cur = $("pw-current").value, nw = $("pw-new").value;
+  const fail = text => { msg.textContent = text; msg.className = "form-msg bad"; };
+  if (!cur) return fail("Enter your current password.");
+  if (nw.length < 10) return fail("New password must be at least 10 characters.");
+  if (nw !== $("pw-confirm").value) return fail("The new passwords don't match.");
+  if (nw === cur) return fail("New password must be different.");
+  $("pw-save").disabled = true;
+  try {
+    const res = await fetch("/hapanel/password", { method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "X-HAPanel": "1" },
+      body: new URLSearchParams({ current: cur, new: nw }) });
+    if (res.status === 401) return toLogin("expired=1");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+    $("pw-form").reset(); $("pw-bar").style.width = "0";
+    msg.textContent = "Password changed. All other devices were signed out."; msg.className = "form-msg ok";
+  } catch (err) { fail(err.message); }
+  finally { $("pw-save").disabled = false; }
+});
+
+/* ---------- session ----------
+   Sign out deletes the session on the server (the cookie stops working everywhere),
+   clears the offline copy of the page, then lands on the login page. */
+let signedOut = false;
+function toLogin(reason) {
+  signedOut = true;
+  disconnect();
+  location.replace("/hapanel/login?" + reason);
+}
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-logout]");
+  if (!t) return;
+  e.preventDefault();
+  const all = t.dataset.logout === "all";
+  if (all && !confirm("Sign out every device, including this one?")) return;
+  signedOut = true;
+  disconnect();
+  try {
+    await fetch("/hapanel/logout", { method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "X-HAPanel": "1" }, body: all ? "all=1" : "" });
+  } catch (err) {}
+  try { for (const k of await caches.keys()) await caches.delete(k); } catch (err) {}
+  location.replace("/hapanel/login?signed_out=1");
+});
+// Is the session still valid? (called when the live stream drops)
+async function checkSession() {
+  try {
+    const res = await fetch("/hapanel/session", { credentials: "same-origin", cache: "no-store" });
+    if (res.status === 401) toLogin("expired=1");
+  } catch (err) {}
+}
+
+/* ---------- live stream (Server-Sent Events) ---------- */
+function setLive(ok, text) {
+  $("live").className = "live" + (ok ? "" : " stale");
+  $("live").innerHTML = `<span>${text}</span>`;
+}
+function connect() {
+  if (es || signedOut) return;
+  prev = null;
+  es = new EventSource(LIVE_URL);
+  es.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.sys?.error) throw new Error(msg.sys.error);
+      msg.sys.haproxy = msg.info;
+      render(msg.rows, msg.sys);
+      applySettings(msg.settings, msg.sys);
+      lastMsg = Date.now();
+      $("error").style.display = "none";
+      setLive(true, "Live");
+    } catch (err) {
+      $("error").textContent = "Data error: " + err.message; $("error").style.display = "block";
+    }
+  };
+  es.onerror = () => { setLive(false, navigator.onLine ? "Reconnecting" : "Offline"); if (navigator.onLine) checkSession(); };
+}
+function disconnect() { if (es) { es.close(); es = null; } }
+// Watchdog: a silent stream (e.g. after sleep) gets reopened
+setInterval(() => { if (es && !document.hidden && Date.now() - lastMsg > 8000) { disconnect(); connect(); } }, 4000);
+document.addEventListener("visibilitychange", () => document.hidden ? disconnect() : connect());
+addEventListener("online", () => { disconnect(); connect(); });
+
+setTheme(document.documentElement.dataset.theme || "auto");
+let startPage = location.hash.slice(1);
+if (!titles[startPage]) { try { startPage = localStorage.getItem("hapanel-page"); } catch (e) {} }
+go(titles[startPage] ? startPage : "home");
+lastMsg = Date.now();
+connect();
+</script>
+</body>
+</html>
