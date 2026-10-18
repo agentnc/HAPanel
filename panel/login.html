@@ -19,19 +19,19 @@
   :root {
     --accent: #16a34a; --bad: #dc2626; --bad-soft: #fdecec; --ok-soft: #e7f7ed; --ok-text: #15803d;
     --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f9fafb; --text: #0f172a; --text-2: #475569;
-    --muted: #94a3b8; --line: #e8ebef; color-scheme: light;
+    --muted: #5f6c7f; --btn: #15803d; --btn-bad: #dc2626; --line: #e8ebef; color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --accent: #22c55e; --bad: #f87171; --bad-soft: rgba(248,113,113,.12); --ok-soft: rgba(34,197,94,.12); --ok-text: #4ade80;
       --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
-      --muted: #687384; --line: #232933; color-scheme: dark;
+      --muted: #8a94a3; --btn: #15803d; --btn-bad: #dc2626; --line: #232933; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --accent: #22c55e; --bad: #f87171; --bad-soft: rgba(248,113,113,.12); --ok-soft: rgba(34,197,94,.12); --ok-text: #4ade80;
     --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
-    --muted: #687384; --line: #232933; color-scheme: dark;
+    --muted: #8a94a3; --btn: #15803d; --btn-bad: #dc2626; --line: #232933; color-scheme: dark;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
@@ -54,7 +54,7 @@
   .pw input { padding-right: 64px; }
   .pw button { position: absolute; right: 6px; top: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 8px;
                background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
-  .submit { width: 100%; height: 44px; margin-top: 20px; border: 0; border-radius: 10px; background: var(--accent);
+  .submit { width: 100%; height: 44px; margin-top: 20px; border: 0; border-radius: 10px; background: var(--btn);
             color: #fff; font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
   .submit:disabled { opacity: .6; cursor: default; }
   .msg { display: none; margin-bottom: 16px; padding: 10px 12px; border-radius: 10px; font-size: 13px; }

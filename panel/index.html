@@ -20,10 +20,10 @@
 <style>
   :root {
     --accent: #16a34a; --accent-soft: #e7f7ed; --accent-text: #15803d;
-    --warn: #d97706; --warn-soft: #fef5e4; --bad: #dc2626; --bad-soft: #fdecec;
+    --warn: #b45309; --warn-soft: #fef5e4; --bad: #dc2626; --bad-soft: #fdecec;
     --c1: #16a34a; --c2: #dc2626; --c3: #f59e0b; --c4: #3b82f6; --c5: #8b5cf6;
     --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f9fafb; --text: #0f172a; --text-2: #475569;
-    --muted: #94a3b8; --line: #e8ebef; --track: #eef1f4; --grid: #f1f3f6;
+    --muted: #5f6c7f; --btn: #15803d; --btn-bad: #dc2626; --line: #e8ebef; --track: #eef1f4; --grid: #f1f3f6;
     --shadow: 0 1px 2px rgba(15,23,42,.04);
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     color-scheme: light;
@@ -34,7 +34,7 @@
       --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --bad: #f87171; --bad-soft: rgba(248,113,113,.12);
       --c1: #22c55e; --c2: #f87171; --c3: #fbbf24; --c4: #60a5fa; --c5: #a78bfa;
       --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
-      --muted: #687384; --line: #232933; --track: #222832; --grid: #1c2129;
+      --muted: #8a94a3; --btn: #15803d; --btn-bad: #dc2626; --line: #232933; --track: #222832; --grid: #1c2129;
       --shadow: none; color-scheme: dark;
     }
   }
@@ -43,7 +43,7 @@
     --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --bad: #f87171; --bad-soft: rgba(248,113,113,.12);
     --c1: #22c55e; --c2: #f87171; --c3: #fbbf24; --c4: #60a5fa; --c5: #a78bfa;
     --bg: #0d1015; --surface: #151920; --surface-2: #1a1f27; --text: #e7eaee; --text-2: #a3abb7;
-    --muted: #687384; --line: #232933; --track: #222832; --grid: #1c2129;
+    --muted: #8a94a3; --btn: #15803d; --btn-bad: #dc2626; --line: #232933; --track: #222832; --grid: #1c2129;
     --shadow: none; color-scheme: dark;
   }
 
@@ -234,7 +234,7 @@
   .input { flex: 1; min-width: 180px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line);
            background: var(--surface-2); outline: none; font-size: 15px; }
   .input:focus { border-color: var(--accent); }
-  .btn { height: 40px; padding: 0 18px; border-radius: 10px; border: 0; background: var(--accent); color: #fff;
+  .btn { height: 40px; padding: 0 18px; border-radius: 10px; border: 0; background: var(--btn); color: #fff;
          font-weight: 600; cursor: pointer; }
   .btn:disabled { opacity: .5; cursor: default; }
   .form-msg { font-size: 12px; margin-top: 8px; min-height: 18px; color: var(--muted); }
@@ -242,7 +242,7 @@
   .copy-btn { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 2px; display: inline-flex; vertical-align: -3px; }
   .copy-btn .i { width: 15px; height: 15px; }
 
-  .btn-danger { background: var(--bad); }
+  .btn-danger { background: var(--btn-bad); }
   .btn-ghost { background: none; border: 1px solid var(--line); color: var(--text-2); }
   .pw-meter { height: 4px; border-radius: 999px; background: var(--track); margin-top: 8px; overflow: hidden; }
   .pw-meter > div { height: 100%; width: 0; border-radius: 999px; background: var(--bad); transition: width .25s, background .25s; }
@@ -306,7 +306,7 @@
     .tabbar a.active { color: var(--text); }
     .tabbar a.active .i { color: var(--accent); }
   }
-  @media (min-width: 861px) { .procs td.meta { display: none; } }
+  @media (min-width: 861px) { .procs td.meta { display: none; } .top-sub { display: none; } }
   @media (prefers-reduced-motion: reduce) { .page.active, .live::before { animation: none; } .bar > div { transition: none; } }
 </style>
 </head>
@@ -435,7 +435,7 @@
       </div>
       <div class="card">
         <div class="toolbar">
-          <input class="search" id="proc-q" type="search" placeholder="Filter by command, user or PID" autocomplete="off" spellcheck="false">
+          <input class="search" id="proc-q" type="search" placeholder="Command, user or PID" aria-label="Filter processes" autocomplete="off" spellcheck="false">
           <select class="sort" id="proc-sort" aria-label="Sort by">
             <option value="cpu">CPU</option><option value="mem">Memory</option><option value="time">Time</option><option value="pid">PID</option>
           </select>
@@ -457,7 +457,7 @@
     <section class="page stack-y" id="page-cron">
       <div class="card facts">
         <div class="fact"><div class="t">Next up</div><div class="v num ell" id="cf-next">–</div><div class="s ell muted" id="cf-next-s" style="font-size:12px">&nbsp;</div></div>
-        <div class="fact"><div class="t">Cron jobs</div><div class="v num" id="cf-jobs">–</div><div class="s ell muted" id="cf-jobs-s" style="font-size:12px">&nbsp;</div></div>
+        <div class="fact"><div class="t">Cron jobs</div><div class="v num" id="cf-jobs">–</div><div class="s muted" id="cf-jobs-s" style="font-size:12px">&nbsp;</div></div>
         <div class="fact"><div class="t">Systemd timers</div><div class="v num" id="cf-timers">–</div><div class="s ell muted" id="cf-timers-s" style="font-size:12px">&nbsp;</div></div>
         <div class="fact"><div class="t">Periodic scripts</div><div class="v num" id="cf-scripts">–</div><div class="s ell muted" id="cf-scripts-s" style="font-size:12px">&nbsp;</div></div>
       </div>
@@ -817,7 +817,7 @@ function renderCron(sys) {
   const jobItem = j => {
     const label = cronLabel(j.command);
     return `<li><div class="grow">
-        <div class="t ell">${esc(label || j.command)}</div>
+        <div class="t">${esc(label || j.command)}</div>
         <div class="s ell">${label ? `<span class="cmdline" title="${esc(j.command)}">${esc(j.command)}</span>` : ""}</div>
         <div class="chips" style="margin-top:6px"><span class="code" title="${esc(j.schedule)}">${esc(j.schedule)}</span>
           <span class="s">${esc(j.human)} · ${esc(j.user)} · ${esc(j.source)}</span></div></div>
@@ -960,9 +960,9 @@ function render(px, sys) {
   const https = fes.find(f => f.pxname === "https") || {};
   const ver = String(hap.Version || "").split("-")[0];
   $("hap-ver").textContent = "v" + ver;
-  $("side-foot").textContent = `HAProxy ${ver} · up ${hap.Uptime || ""}`;
+  $("side-foot").textContent = `HAProxy ${ver} · up ${hap.Uptime_sec != null ? dur(hap.Uptime_sec) : (hap.Uptime || "")}`;
   kv("kv-hap", [
-    ["Uptime", esc(hap.Uptime || "—")],
+    ["Uptime", hap.Uptime_sec != null ? dur(hap.Uptime_sec) : esc(hap.Uptime || "—")],
     ["Active connections", `${fmt(conns)} / ${fmt(maxconn)}`],
     ["Connections / s", `${fmt(hap.ConnRate)} <span class="muted">peak ${fmt(hap.MaxConnRate)}</span>`],
     ["Total requests", fmt(hap.CumReq)],
